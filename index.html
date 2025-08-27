@@ -2,230 +2,25 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Интерактивные карты</title>
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-      background: #333;
-      color: white;
-    }
-
-    #map-container {
-      position: relative;
-      width: 90vw;
-      height: 70vh;
-      overflow: hidden;
-      touch-action: none;
-    }
-
-    #map {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform-origin: center center;
-      transform: translate(-50%, -50%) scale(1) rotate(0deg);
-      max-width: none;
-      max-height: none;
-    }
-
-    .icon {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      transform: translate(-50%, -50%) rotate(0deg);
-      transform-origin: center;
-      pointer-events: auto;
-    }
-
-    #buttons {
-      margin-top: 10px;
-    }
-
-    button {
-      margin: 0 5px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      background: #555;
-      color: white;
-      font-size: 16px;
-    }
-
-    button:hover {
-      background: #777;
-      cursor: pointer;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Интерактивная карта</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Интерактивные карты с иконками</h2>
+  <div class="controls">
+    <button onclick="setMap(0)">Карта 1</button>
+    <button onclick="setMap(1)">Карта 2</button>
+    <button onclick="setMap(2)">Карта 3</button>
+    <button onclick="setMap(3)">Карта 4</button>
+  </div>
+
   <div id="map-container">
-    <img id="map" src="image/map1.png" alt="map">
-    <!-- Иконки -->
-    <img class="icon" id="icon0" src="">
-    <img class="icon" id="icon1" src="">
-    <img class="icon" id="icon2" src="">
-    <img class="icon" id="icon3" src="">
-    <img class="icon" id="icon4" src="">
-    <img class="icon" id="icon5" src="">
-    <img class="icon" id="icon6" src="">
-    <img class="icon" id="icon7" src="">
-    <img class="icon" id="icon8" src="">
+    <div id="map-wrapper">
+      <img id="map-image" src="maps/map1.png" alt="map">
+      <div id="icons-layer"></div>
+    </div>
   </div>
 
-  <div id="buttons">
-    <button onclick="switchMap(0)">Карта 1</button>
-    <button onclick="switchMap(1)">Карта 2</button>
-    <button onclick="switchMap(2)">Карта 3</button>
-    <button onclick="switchMap(3)">Карта 4</button>
-  </div>
-
-  <script>
-    const map = document.getElementById("map");
-    const icons = Array.from(document.getElementsByClassName("icon"));
-
-    // --- Настройки иконок для каждой карты ---
-    const mapsData = [
-      {
-        src: "image/map1.png",
-        icons: [
-          {src:"image/icon1.png", x:100, y:150},
-          {src:"image/icon2.png", x:300, y:200},
-          {src:"image/icon3.png", x:500, y:350},
-          {src:"", x:0, y:0}, // пустая → не показывается
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0}
-        ]
-      },
-      {
-        src: "image/map2.png",
-        icons: [
-          {src:"image/icon1.png", x:200, y:250},
-          {src:"image/icon2.png", x:400, y:300},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0}
-        ]
-      },
-      {
-        src: "image/map3.png",
-        icons: [
-          {src:"image/icon3.png", x:250, y:200},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0}
-        ]
-      },
-      {
-        src: "image/map4.png",
-        icons: [
-          {src:"image/icon2.png", x:350, y:250},
-          {src:"image/icon3.png", x:450, y:350},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0},
-          {src:"", x:0, y:0}
-        ]
-      }
-    ];
-
-    let currentMap = 0;
-    let scale = 1, rotation = 0;
-    let startX = 0, startY = 0, translateX = 0, translateY = 0;
-    let activeTouches = [];
-
-    function updateTransform() {
-      map.style.transform = `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)`;
-
-      // Обновление иконок
-      const data = mapsData[currentMap];
-      data.icons.forEach((icon, i) => {
-        if (icon.src && icon.x !== 0 && icon.y !== 0) {
-          icons[i].style.display = "block";
-          icons[i].src = icon.src;
-          icons[i].style.left = `calc(50% + ${translateX + (icon.x - map.width/2) * scale}px)`;
-          icons[i].style.top = `calc(50% + ${translateY + (icon.y - map.height/2) * scale}px)`;
-          icons[i].style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${-rotation}deg)`; // иконка не крутится с картой
-        } else {
-          icons[i].style.display = "none";
-        }
-      });
-    }
-
-    function switchMap(index) {
-      currentMap = index;
-      map.src = mapsData[index].src;
-      scale = 1; rotation = 0; translateX = 0; translateY = 0;
-      updateTransform();
-    }
-
-    // Зум колесом мыши
-    document.getElementById("map-container").addEventListener("wheel", e => {
-      e.preventDefault();
-      scale += e.deltaY * -0.001;
-      scale = Math.min(Math.max(0.5, scale), 5);
-      updateTransform();
-    });
-
-    // Сенсорные жесты
-    document.getElementById("map-container").addEventListener("touchstart", e => {
-      activeTouches = Array.from(e.touches);
-    });
-
-    document.getElementById("map-container").addEventListener("touchmove", e => {
-      if (activeTouches.length === 1 && e.touches.length === 1) {
-        translateX += e.touches[0].clientX - activeTouches[0].clientX;
-        translateY += e.touches[0].clientY - activeTouches[0].clientY;
-      }
-      if (activeTouches.length >= 2 && e.touches.length >= 2) {
-        const distStart = Math.hypot(
-          activeTouches[0].clientX - activeTouches[1].clientX,
-          activeTouches[0].clientY - activeTouches[1].clientY
-        );
-        const distNow = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        scale *= distNow / distStart;
-
-        const angleStart = Math.atan2(
-          activeTouches[1].clientY - activeTouches[0].clientY,
-          activeTouches[1].clientX - activeTouches[0].clientX
-        );
-        const angleNow = Math.atan2(
-          e.touches[1].clientY - e.touches[0].clientY,
-          e.touches[1].clientX - e.touches[0].clientX
-        );
-        rotation += (angleNow - angleStart) * 180 / Math.PI;
-      }
-      activeTouches = Array.from(e.touches);
-      updateTransform();
-    });
-
-    updateTransform();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
-
-
